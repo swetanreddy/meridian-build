@@ -1,6 +1,6 @@
 import { type CSSProperties, type MouseEvent, useId, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Activity, ArrowLeft, ArrowUpRight, Building2, Download, Info, MessageSquare, MonitorSmartphone, MousePointerClick, Users } from "lucide-react";
+import { Activity, ArrowLeft, ArrowUpRight, Building2, Download, Info, MessageSquare, MonitorSmartphone, MousePointerClick, Users, type LucideIcon } from "lucide-react";
 import "../analytics.css";
 
 type RangeKey = "7d" | "30d" | "90d";
@@ -120,6 +120,59 @@ function MeridianAnalyticsLogo() {
     <a className="analytics-logo" href="#top" aria-label="Return to Meridian Build website">
       <span>M</span><div><strong>MERIDIAN</strong><small>ANALYTICS</small></div>
     </a>
+  );
+}
+
+type KpiDatum = {
+  Icon: LucideIcon;
+  label: string;
+  value: string;
+  change: string;
+  current: number;
+  previous: number;
+  currentLabel: string;
+  previousLabel: string;
+};
+
+function KpiPie({ label, current, previous, currentLabel, previousLabel }: Pick<KpiDatum, "label" | "current" | "previous" | "currentLabel" | "previousLabel">) {
+  const [active, setActive] = useState<"current" | "previous" | null>(null);
+  const total = current + previous;
+  const currentShare = (current / total) * 100;
+  const previousShare = 100 - currentShare;
+
+  return (
+    <div className="kpi-pie">
+      <svg viewBox="0 0 72 72" role="img" aria-label={`${label}: current period ${currentLabel}, previous period ${previousLabel}`}>
+        <circle className="kpi-pie-base" cx="36" cy="36" r="27" />
+        <motion.circle
+          className="kpi-pie-segment kpi-pie-current"
+          cx="36" cy="36" r="27" pathLength="100"
+          initial={{ strokeDasharray: "0 100" }}
+          animate={{ strokeDasharray: `${currentShare} ${100 - currentShare}` }}
+          transition={{ duration: .5, ease: "easeOut" }}
+          tabIndex={0} role="img" aria-label={`Current period: ${currentLabel}`}
+          onMouseEnter={() => setActive("current")} onMouseLeave={() => setActive(null)}
+          onFocus={() => setActive("current")} onBlur={() => setActive(null)}
+        />
+        <motion.circle
+          className="kpi-pie-segment kpi-pie-previous"
+          cx="36" cy="36" r="27" pathLength="100"
+          initial={{ strokeDasharray: "0 100", strokeDashoffset: -currentShare }}
+          animate={{ strokeDasharray: `${previousShare} ${100 - previousShare}`, strokeDashoffset: -currentShare }}
+          transition={{ duration: .5, ease: "easeOut", delay: .08 }}
+          tabIndex={0} role="img" aria-label={`Previous period: ${previousLabel}`}
+          onMouseEnter={() => setActive("previous")} onMouseLeave={() => setActive(null)}
+          onFocus={() => setActive("previous")} onBlur={() => setActive(null)}
+        />
+      </svg>
+      <span className="kpi-pie-center">VS</span>
+      {active !== null && (
+        <div className="kpi-pie-tooltip" role="status">
+          <span>{active === "current" ? "Current period" : "Previous period"}</span>
+          <strong>{active === "current" ? currentLabel : previousLabel}</strong>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -296,6 +349,20 @@ export default function AnalyticsDashboard() {
   const [range, setRange] = useState<RangeKey>("30d");
   const data = rangeData[range];
   const visitorTotal = Number(data.visitors.replaceAll(",", ""));
+  const sessionTotal = Number(data.sessions.replaceAll(",", ""));
+  const enquiryTotal = Number(data.enquiries.replaceAll(",", ""));
+  const conversionTotal = Number(data.conversion.replace("%", ""));
+  const countFormatter = (value: number) => Math.round(value).toLocaleString("en-US");
+  const previousVisitors = visitorTotal / (1 + Number.parseFloat(data.visitorsChange) / 100);
+  const previousSessions = sessionTotal / (1 + Number.parseFloat(data.sessionsChange) / 100);
+  const previousEnquiries = enquiryTotal / (1 + Number.parseFloat(data.enquiriesChange) / 100);
+  const previousConversion = conversionTotal - Number.parseFloat(data.conversionChange);
+  const kpis: KpiDatum[] = [
+    { Icon: Users, label: "Unique visitors", value: data.visitors, change: data.visitorsChange, current: visitorTotal, previous: previousVisitors, currentLabel: data.visitors, previousLabel: countFormatter(previousVisitors) },
+    { Icon: MousePointerClick, label: "Sessions", value: data.sessions, change: data.sessionsChange, current: sessionTotal, previous: previousSessions, currentLabel: data.sessions, previousLabel: countFormatter(previousSessions) },
+    { Icon: MessageSquare, label: "Enquiries", value: data.enquiries, change: data.enquiriesChange, current: enquiryTotal, previous: previousEnquiries, currentLabel: data.enquiries, previousLabel: countFormatter(previousEnquiries) },
+    { Icon: Activity, label: "Conversion rate", value: data.conversion, change: data.conversionChange, current: conversionTotal, previous: previousConversion, currentLabel: data.conversion, previousLabel: `${previousConversion.toFixed(2)}%` },
+  ];
   const funnelLabels = ["Website visitors", "Engaged sessions", "Chatbot opened", "Enquiries"];
 
   const scrollToSection = (event: MouseEvent<HTMLAnchorElement>, sectionId: string) => {
@@ -342,16 +409,14 @@ export default function AnalyticsDashboard() {
         <section className="analytics-status"><span><i /> SITE HEALTHY</span><p>{data.label} · Demo data · Asia/Kolkata</p></section>
 
         <section className="metric-row" aria-label="Key performance indicators">
-          {[
-            [Users, "Unique visitors", data.visitors, data.visitorsChange],
-            [MousePointerClick, "Sessions", data.sessions, data.sessionsChange],
-            [MessageSquare, "Enquiries", data.enquiries, data.enquiriesChange],
-            [Activity, "Conversion rate", data.conversion, data.conversionChange],
-          ].map(([Icon, label, value, change]) => (
-            <article className="metric" key={String(label)}>
-              <div><Icon size={17} /><span>{String(label)}</span></div>
-              <strong>{String(value)}</strong>
-              <p><b>{String(change)}</b> vs previous period</p>
+          {kpis.map(({ Icon, label, value, change, ...pieData }) => (
+            <article className="metric" key={label}>
+              <div className="metric-label"><Icon size={17} /><span>{label}</span></div>
+              <div className="metric-body">
+                <strong>{value}</strong>
+                <KpiPie label={label} {...pieData} />
+              </div>
+              <p><b>{change}</b> vs previous period</p>
             </article>
           ))}
         </section>
