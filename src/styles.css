@@ -105,6 +105,11 @@ footer > div { display: flex; flex-direction: column; gap: 7px; }
   .hero-lower p { max-width: 320px; }
   .hero-index { display: none; }
   .hero > img { object-position: 55% center; }
+  .hero-blue {
+    background:
+      linear-gradient(90deg, rgba(3, 46, 131, .58) 0%, rgba(3, 57, 160, .22) 30%, rgba(3, 53, 148, 0) 60%),
+      linear-gradient(0deg, rgba(4, 20, 48, .48), transparent 48%);
+  }
   .intro-copy, .project-head, .services-title, .standard { grid-template-columns: 1fr; }
   .intro-copy p, .services-title p { margin-top: 38px; }
   .metrics { margin-top: 70px; }
