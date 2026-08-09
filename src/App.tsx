@@ -5,6 +5,7 @@ import heroImage from "./assets/hero-campus.png";
 import residenceImage from "./assets/residence.png";
 import hillsideImage from "./assets/hillside.png";
 import EnquiryChat from "./components/EnquiryChat";
+import AnalyticsDashboard from "./components/AnalyticsDashboard";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -56,7 +57,7 @@ function Reveal({ children, className = "", delay = 0 }: { children: React.React
   return <motion.div className={className} initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .2 }} transition={{ duration: .72, delay, ease }}>{children}</motion.div>;
 }
 
-function App() {
+function MarketingSite() {
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const imageScale = useTransform(scrollYProgress, [0, 1], [1, 1.12]);
@@ -133,12 +134,24 @@ function App() {
       <footer>
         <Logo />
         <p>Level 3, Plot 714, Road No. 36<br />Jubilee Hills, Hyderabad 500033</p>
-        <div><a href="tel:+914047151900">+91 40 4715 1900</a><a href="#top">Back to top ↑</a></div>
+        <div><a href="tel:+914047151900">+91 40 4715 1900</a><a href="#/analytics">Analytics demo</a><a href="#top">Back to top ↑</a></div>
         <span>© 2026 Meridian Build</span>
       </footer>
       <EnquiryChat />
     </main>
   );
+}
+
+function App() {
+  const [analyticsView, setAnalyticsView] = useState(() => window.location.hash.startsWith("#/analytics"));
+
+  useEffect(() => {
+    const updateView = () => setAnalyticsView(window.location.hash.startsWith("#/analytics"));
+    window.addEventListener("hashchange", updateView);
+    return () => window.removeEventListener("hashchange", updateView);
+  }, []);
+
+  return analyticsView ? <AnalyticsDashboard /> : <MarketingSite />;
 }
 
 export default App;
