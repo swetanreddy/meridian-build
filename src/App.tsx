@@ -4,6 +4,7 @@ import { ArrowDown, ArrowRight, ArrowUpRight, MapPin, Menu, X } from "lucide-rea
 import heroImage from "./assets/hero-campus.png";
 import residenceImage from "./assets/residence.png";
 import hillsideImage from "./assets/hillside.png";
+import EnquiryChat from "./components/EnquiryChat";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -135,6 +136,7 @@ function App() {
         <div><a href="tel:+914047151900">+91 40 4715 1900</a><a href="#top">Back to top ↑</a></div>
         <span>© 2026 Meridian Build</span>
       </footer>
+      <EnquiryChat />
     </main>
   );
 }
